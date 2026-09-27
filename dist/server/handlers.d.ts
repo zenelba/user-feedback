@@ -50,7 +50,9 @@ export type FeedbackHandlerOptions = {
     projectId?: string;
     authorize: (req: FeedbackRequest) => boolean;
     ensureEnv?: EnsureEnvFn;
+    /** Fallback if `FEEDBACK_TO_EMAIL` env is unset. Prefer env. */
     defaultToEmail?: string;
+    /** Fallback if `FEEDBACK_FROM_EMAIL` env is unset. */
     defaultFromEmail?: string;
 };
 export declare function createFeedbackSaveHandler(opts: FeedbackHandlerOptions): (req: FeedbackRequest, res: FeedbackResponse) => Promise<void>;

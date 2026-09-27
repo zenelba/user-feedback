@@ -7,7 +7,7 @@ Users click the screenshot to pin where the issue is. The pin is baked into the 
 ## Install
 
 ```json
-"@zenel/user-feedback": "github:zenelba/user-feedback#v0.2.1"
+"@zenel/user-feedback": "github:zenelba/user-feedback#v0.2.2"
 ```
 
 `dist/` is committed, so git installs need no build step (works on Vercel).
@@ -51,7 +51,19 @@ export default createFeedbackSaveHandler({
 
 Same pattern for `createFeedbackListHandler` and `createFeedbackResolveHandler`.
 
-Env: use the **shared** `POSTGRES_URL` and `BLOB_READ_WRITE_TOKEN` (same values as Bluring) so all apps report into one store, separated by `projectId`. `RESEND_API_KEY` is optional (email on submit).
+Env (on each host app — never commit these):
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `POSTGRES_URL` | for DB | shared Neon store (same as Bluring); rows separated by `projectId` |
+| `BLOB_READ_WRITE_TOKEN` | for screenshots | Vercel Blob upload |
+| `RESEND_API_KEY` | for email | optional; without it, submit still saves to DB/Blob |
+| `FEEDBACK_TO_EMAIL` | for email | recipient; **required** if you want Resend mail (no package default) |
+| `FEEDBACK_FROM_EMAIL` | optional | defaults to `AppName Feedback <onboarding@resend.dev>` |
+
+Screenshot blobs are stored with public URLs, e.g.  
+`https://<store>.public.blob.vercel-storage.com/feedback/2026-09-27T18-01-00_map_error.png`  
+Anyone who knows that URL can open the PNG.
 
 ## Updating apps
 

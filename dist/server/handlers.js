@@ -32,13 +32,12 @@ function nl2br(s) {
 async function sendResendEmail(opts, input) {
     opts.ensureEnv?.();
     const apiKey = process.env.RESEND_API_KEY?.trim();
-    if (!apiKey)
+    // Recipient must come from env (no hardcoded personal address in the package).
+    const to = process.env.FEEDBACK_TO_EMAIL?.trim() || opts.defaultToEmail?.trim() || "";
+    if (!apiKey || !to)
         return false;
-    const to = process.env.FEEDBACK_TO_EMAIL?.trim() ||
-        opts.defaultToEmail ||
-        "zenelb@gmail.com";
     const from = process.env.FEEDBACK_FROM_EMAIL?.trim() ||
-        opts.defaultFromEmail ||
+        opts.defaultFromEmail?.trim() ||
         `${opts.appName} Feedback <onboarding@resend.dev>`;
     const subjectFocus = input.focus.trim().slice(0, 60) ||
         input.wrong.trim().slice(0, 60) ||
