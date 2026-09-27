@@ -7,7 +7,7 @@ Users click the screenshot to pin where the issue is. The pin is baked into the 
 ## Install
 
 ```json
-"@zenel/user-feedback": "github:zenelba/user-feedback#v0.2.0"
+"@zenel/user-feedback": "github:zenelba/user-feedback#v0.2.1"
 ```
 
 `dist/` is committed, so git installs need no build step (works on Vercel).

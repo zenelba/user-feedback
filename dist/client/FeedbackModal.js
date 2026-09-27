@@ -1,5 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { bakePinOntoPngBase64, formatPinFocus, submitFeedback, } from "./submit.js";
 export function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, taskId, taskTitle, journalMarkdown, journal, idbName, saveUrl, onClose, }) {
     const [kind, setKind] = useState("error");
@@ -9,7 +10,13 @@ export function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, task
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [result, setResult] = useState(null);
+    const [mounted, setMounted] = useState(false);
     const shotRef = useRef(null);
+    const busyRef = useRef(busy);
+    busyRef.current = busy;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     useEffect(() => {
         if (!open)
             return;
@@ -21,7 +28,27 @@ export function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, task
         setError(null);
         setResult(null);
     }, [open, screenshotDataUrl]);
-    if (!open)
+    // Escape host sticky headers / stacking contexts; lock page scroll while open.
+    useEffect(() => {
+        if (!open)
+            return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [open]);
+    useEffect(() => {
+        if (!open)
+            return;
+        const onKey = (e) => {
+            if (e.key === "Escape" && !busyRef.current)
+                onClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, onClose]);
+    if (!open || !mounted)
         return null;
     const canSubmit = Boolean(screenshotDataUrl) &&
         pin != null &&
@@ -80,11 +107,11 @@ export function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, task
             setBusy(false);
         }
     };
-    return (_jsxs("div", { className: "feedback-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "feedback-title", children: [_jsx("div", { className: "feedback-modal__backdrop", onClick: () => !busy && onClose() }), _jsxs("div", { className: "feedback-modal__panel", children: [_jsxs("div", { className: "feedback-modal__head", children: [_jsx("h2", { id: "feedback-title", children: "Report error / idea" }), _jsx("button", { type: "button", className: "btn btn--ghost", onClick: onClose, disabled: busy, children: "Close" })] }), result ? (_jsxs("div", { className: "feedback-modal__done", children: [_jsxs("p", { children: ["Thanks \u2014 report saved", result.savedToDb
+    return createPortal(_jsxs("div", { className: "feedback-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "feedback-title", children: [_jsx("div", { className: "feedback-modal__backdrop", onClick: () => !busy && onClose() }), _jsxs("div", { className: "feedback-modal__panel", children: [_jsxs("div", { className: "feedback-modal__head", children: [_jsx("h2", { id: "feedback-title", children: "Report error / idea" }), _jsx("button", { type: "button", className: "btn btn--ghost", onClick: onClose, disabled: busy, children: "Close" })] }), result ? (_jsxs("div", { className: "feedback-modal__done", children: [_jsxs("p", { children: ["Thanks \u2014 report saved", result.savedToDb
                                         ? " to the database"
                                         : result.savedToDisk ? (_jsxs(_Fragment, { children: [" ", "to ", _jsx("code", { children: "feedback/" })] })) : (" (downloaded as zip)"), "."] }), result.emailed ? (_jsx("p", { children: "Email sent to the owner." })) : (_jsx("p", { className: "feedback-modal__soft", children: "Email not configured or send failed." })), _jsx("button", { type: "button", className: "btn btn--primary", onClick: onClose, children: "Done" })] })) : (_jsxs("div", { className: "feedback-modal__body", children: [_jsxs("div", { className: "feedback-modal__shot-col", children: [_jsx("p", { className: "feedback-modal__hint", children: "Click the screenshot to mark where the issue is." }), _jsx("div", { ref: shotRef, className: "feedback-modal__shot", onClick: handleShotClick, role: "presentation", children: screenshotDataUrl ? (_jsxs("div", { className: "feedback-modal__shot-inner", children: [_jsx("img", { src: screenshotDataUrl, alt: "App screenshot" }), pin && (_jsx("span", { className: "feedback-modal__pin", style: {
                                                         left: `${pin.x * 100}%`,
                                                         top: `${pin.y * 100}%`,
-                                                    }, "aria-hidden": true }))] })) : (_jsx("p", { children: "No screenshot" })) }), pin && (_jsx("div", { className: "feedback-modal__shot-actions", children: _jsx("button", { type: "button", className: "btn btn--ghost", onClick: () => setPin(null), disabled: busy, children: "Clear pin" }) }))] }), _jsxs("div", { className: "feedback-modal__form-col", children: [_jsxs("div", { className: "feedback-modal__kind", children: [_jsxs("label", { children: [_jsx("input", { type: "radio", name: "feedback-kind", checked: kind === "error", onChange: () => setKind("error") }), "Error"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "feedback-kind", checked: kind === "idea", onChange: () => setKind("idea") }), "Idea"] })] }), _jsxs("label", { className: "feedback-modal__field", children: [_jsx("span", { children: "What is wrong" }), _jsx("textarea", { rows: 4, value: wrong, onChange: (e) => setWrong(e.target.value), placeholder: "What you see that should not happen\u2026" })] }), _jsxs("label", { className: "feedback-modal__field", children: [_jsx("span", { children: "What is expected" }), _jsx("textarea", { rows: 4, value: expected, onChange: (e) => setExpected(e.target.value), placeholder: "What should happen instead\u2026" })] }), error && _jsx("p", { className: "error-text", children: error }), !pin && screenshotDataUrl && (_jsx("p", { className: "feedback-modal__soft", children: "Mark a point on the screenshot before submitting." })), _jsxs("div", { className: "feedback-modal__actions", children: [_jsx("button", { type: "button", className: "btn btn--ghost", onClick: onClose, disabled: busy, children: "Cancel" }), _jsx("button", { type: "button", className: "btn btn--primary", onClick: () => void handleSubmit(), disabled: !canSubmit, children: busy ? "Sending…" : "Submit" })] })] })] }))] })] }));
+                                                    }, "aria-hidden": true }))] })) : (_jsx("p", { children: "No screenshot" })) }), pin && (_jsx("div", { className: "feedback-modal__shot-actions", children: _jsx("button", { type: "button", className: "btn btn--ghost", onClick: () => setPin(null), disabled: busy, children: "Clear pin" }) }))] }), _jsxs("div", { className: "feedback-modal__form-col", children: [_jsxs("div", { className: "feedback-modal__kind", children: [_jsxs("label", { children: [_jsx("input", { type: "radio", name: "feedback-kind", checked: kind === "error", onChange: () => setKind("error") }), "Error"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "feedback-kind", checked: kind === "idea", onChange: () => setKind("idea") }), "Idea"] })] }), _jsxs("label", { className: "feedback-modal__field", children: [_jsx("span", { children: "What is wrong" }), _jsx("textarea", { rows: 3, value: wrong, onChange: (e) => setWrong(e.target.value), placeholder: "What you see that should not happen\u2026" })] }), _jsxs("label", { className: "feedback-modal__field", children: [_jsx("span", { children: "What is expected" }), _jsx("textarea", { rows: 3, value: expected, onChange: (e) => setExpected(e.target.value), placeholder: "What should happen instead\u2026" })] }), error && _jsx("p", { className: "error-text", children: error }), !pin && screenshotDataUrl && (_jsx("p", { className: "feedback-modal__soft", children: "Mark a point on the screenshot before submitting." })), _jsxs("div", { className: "feedback-modal__actions", children: [_jsx("button", { type: "button", className: "btn btn--ghost", onClick: onClose, disabled: busy, children: "Cancel" }), _jsx("button", { type: "button", className: "btn btn--primary", onClick: () => void handleSubmit(), disabled: !canSubmit, children: busy ? "Sending…" : "Submit" })] })] })] }))] })] }), document.body);
 }
 export default FeedbackModal;

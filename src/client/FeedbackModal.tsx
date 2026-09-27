@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import {
   bakePinOntoPngBase64,
   formatPinFocus,
@@ -45,7 +46,14 @@ export function FeedbackModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FeedbackSubmitResult | null>(null);
+  const [mounted, setMounted] = useState(false);
   const shotRef = useRef<HTMLDivElement>(null);
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +66,26 @@ export function FeedbackModal({
     setResult(null);
   }, [open, screenshotDataUrl]);
 
-  if (!open) return null;
+  // Escape host sticky headers / stacking contexts; lock page scroll while open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busyRef.current) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open || !mounted) return null;
 
   const canSubmit =
     Boolean(screenshotDataUrl) &&
@@ -114,7 +141,7 @@ export function FeedbackModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="feedback-modal"
       role="dialog"
@@ -238,7 +265,7 @@ export function FeedbackModal({
               <label className="feedback-modal__field">
                 <span>What is wrong</span>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={wrong}
                   onChange={(e) => setWrong(e.target.value)}
                   placeholder="What you see that should not happen…"
@@ -247,7 +274,7 @@ export function FeedbackModal({
               <label className="feedback-modal__field">
                 <span>What is expected</span>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={expected}
                   onChange={(e) => setExpected(e.target.value)}
                   placeholder="What should happen instead…"
@@ -283,7 +310,8 @@ export function FeedbackModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -13,6 +13,6 @@ export type FeedbackModalProps = {
     saveUrl?: string;
     onClose: () => void;
 };
-export declare function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, taskId, taskTitle, journalMarkdown, journal, idbName, saveUrl, onClose, }: FeedbackModalProps): import("react").JSX.Element | null;
+export declare function FeedbackModal({ open, screenshotDataUrl, toolId, toolLabel, taskId, taskTitle, journalMarkdown, journal, idbName, saveUrl, onClose, }: FeedbackModalProps): import("react").ReactPortal | null;
 export default FeedbackModal;
 //# sourceMappingURL=FeedbackModal.d.ts.map
